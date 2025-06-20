@@ -10,7 +10,7 @@
 
 :root {
 	--color-basic: rgba(0, 128, 0, 1);
-	--color-header-background: rgba(0, 128, 0, 0.7);
+	--color-basic-opacity: rgba(0, 128, 0, 0.7);
 	--height-field: 40px;
 	--shadow: 0px 0px 8px -2px var(--color-basic);
 	--shadow-input-active: 0px 0px 10px -1px var(--color-basic);
@@ -50,6 +50,7 @@
 	font-weight: 700;
 	text-transform: uppercase;
 	margin-bottom: 5px;
+	border-radius: 5px;
 }
 
 body {
@@ -64,7 +65,7 @@ body {
 	justify-content: center;
 	align-items: center;
 	column-gap: 20px;
-	background: var(--color-header-background);
+	background: var(--color-basic-opacity);
 	margin-bottom: 30px;
 	padding: 20px 0;
 }
@@ -194,7 +195,7 @@ body {
 	column-gap: 10px;
 	height: 100%;
 	min-height: var(--height-field);
-	
+
 	border-radius: 5px;
 	box-shadow: var(--shadow);
 	-webkit-box-shadow: var(--shadow);
@@ -278,8 +279,8 @@ body {
 	.header__logo {
 		width: 40px;
 	}
-	
-	.header__title{
+
+	.header__title {
 		font-size: 26px;
 	}
 

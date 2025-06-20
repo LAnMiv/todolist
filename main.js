@@ -1,14 +1,18 @@
-
 import { saveTasksInLocalStorageve, getTasksFromLocalStorage } from "./js/localstorage.js";
-import { getUniqueForIDTask, replaceTaskTextStyle, filterTaskList } from "./js/utils.js";
+import { getUniqueForIDTask } from "./js/utils.js";
+import { createObservable } from "./js/createObservable.js";
 import { renderTasksList } from "./js/render.js";
 import variables from "./js/variables.js";
 
-const { addTaskInput, addTaskButton, tabElementsContainer, tabElements, tabActiveButton } = variables;
+const { addTaskInput, addTaskButton, tabElementsContainer, tabElements, tasksСontent } = variables;
 
-export let tasksList = getTasksFromLocalStorage();
-let currentActiveTab = tabActiveButton;
+// Создаем наблюдатель состояния с начальным значением
+let tasksObservebale = createObservable(getTasksFromLocalStorage());
 
+// Подписываемся на наблюдатель состояния
+tasksObservebale.subscribe(renderTasksList);
+
+// Обработчик добавления новой задачи
 addTaskButton.addEventListener("click", (event) => {
 	const taskText = addTaskInput.value.trim();
 
@@ -21,58 +25,72 @@ addTaskButton.addEventListener("click", (event) => {
 			completed: false,
 		};
 
-		tasksList.push(newTask);
+		const newTasksList = [...tasksObservebale.getTasks(), newTask]
+
 		addTaskInput.value = "";
-		
-		saveTasksInLocalStorageve(tasksList);
-		renderTasksList(currentActiveTab, tasksList);
+
+		tasksObservebale.setTasks(newTasksList);
+		saveTasksInLocalStorageve(tasksObservebale.getTasks());
 	};
 });
 
+// Обработчик фильтра задач
 tabElementsContainer.addEventListener("click", (event) => {
-	const parentTarget = event.target.parentElement;
+	const currentActiveTab = event.target.parentElement;
 
 	tabElements.forEach((tab) => {
 		tab.classList.remove("active");
 	});
 
-	parentTarget.classList.add("active");
-	currentActiveTab = parentTarget;
+	currentActiveTab.classList.add("active");
 
-	renderTasksList(currentActiveTab, tasksList);
+	let tasksList = [...tasksObservebale.getTasks()];
+
+	tasksObservebale.setTasks(tasksList, currentActiveTab);
 });
 
-export const handleCheckbox = (event) => {
-	const taskElement = event.target.closest(".tasks__item");
-	const taskTextElement = taskElement.querySelector("p");
-	const taskElementId = taskElement.dataset.idTask;
+// Обработчик завершенных/незавершенных задач
+tasksСontent.addEventListener("change", (event) => {
+	if (event.target.closest(".item__checkbox-complete")) {
+		const taskElement = event.target.closest(".tasks__item");
+		const inputCheckboxElement = taskElement.querySelector(".item__checkbox-input-complete");
+		const taskElementId = taskElement.dataset.idTask;
 
-	tasksList = tasksList.map((item) => {
-		if (item.id === taskElementId) {
-			item.completed = event.target.checked;
+		const tasksList = [...tasksObservebale.getTasks()];
+		const newTasksList = tasksList.map((task) => {
+			if (task.id === taskElementId) {
+				task.completed = inputCheckboxElement.checked;
+			};
 
-			replaceTaskTextStyle(event.target.checked, taskTextElement);
-		};
+			return task;
+		});
 
-		return item;
-	});
+		tasksObservebale.setTasks(newTasksList);
+		saveTasksInLocalStorageve(tasksObservebale.getTasks());
+	};
+});
 
-	saveTasksInLocalStorageve(tasksList);
-	renderTasksList(currentActiveTab, tasksList);
-};
+// Обработчик удаления задачи
+tasksСontent.addEventListener("click", (event) => {
+	if (event.target.closest(".item__button-remove")) {
+		const taskElement = event.target.closest(".tasks__item");
+		const taskElementId = taskElement.dataset.idTask;
 
-export const handleRemoveButton = (event) => {
-	const taskElement = event.target.closest(".tasks__item");
-	const taskElementId = taskElement.dataset.idTask;
+		const tasksList = [...tasksObservebale.getTasks()];
 
-	tasksList = tasksList.filter((item) => {
-		if (item.id !== taskElementId) {
-			return item;
-		}
-	})
+		const newTasksList = tasksList.filter((item) => {
+			if (item.id !== taskElementId) {
+				return item;
+			}
+		})
 
-	saveTasksInLocalStorageve(tasksList);
-	taskElement.remove();
-};
+		tasksObservebale.setTasks(newTasksList);
+		saveTasksInLocalStorageve(tasksObservebale.getTasks());
+	};
+});
 
-renderTasksList(currentActiveTab, tasksList);
+// Рендер списка задач при первом запуске приложения
+document.addEventListener("DOMContentLoaded", () => {
+	const tasksList = [...tasksObservebale.getTasks()];
+	tasksObservebale.setTasks(tasksList);
+});
